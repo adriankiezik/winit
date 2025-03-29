@@ -14,7 +14,7 @@ use windows_sys::Win32::Foundation::{
     HWND, LPARAM, OLE_E_WRONGCOMPOBJ, POINT, POINTS, RECT, RPC_E_CHANGED_MODE, S_OK, WPARAM,
 };
 use windows_sys::Win32::Graphics::Dwm::{
-    DwmEnableBlurBehindWindow, DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_CAPTION_COLOR,
+    DwmEnableBlurBehindWindow, DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_CAPTION_COLOR, DWMWA_CLOAK,
     DWMWA_SYSTEMBACKDROP_TYPE, DWMWA_TEXT_COLOR, DWMWA_WINDOW_CORNER_PREFERENCE, DWM_BB_BLURREGION,
     DWM_BB_ENABLE, DWM_BLURBEHIND, DWM_SYSTEMBACKDROP_TYPE, DWM_WINDOW_CORNER_PREFERENCE,
 };
@@ -346,6 +346,19 @@ impl Window {
                 DWMWA_WINDOW_CORNER_PREFERENCE as u32,
                 &(preference as DWM_WINDOW_CORNER_PREFERENCE) as *const _ as _,
                 mem::size_of::<DWM_WINDOW_CORNER_PREFERENCE>() as _,
+            );
+        }
+    }
+
+    #[inline]
+    pub fn set_cloaked(&self, cloaked: bool) {
+        let cloaked = if cloaked { true } else { false };
+        unsafe {
+            DwmSetWindowAttribute(
+                self.hwnd(),
+                DWMWA_CLOAK.try_into().unwrap(),
+                &cloaked as *const bool as *const _,
+                mem::size_of::<bool>() as u32,
             );
         }
     }
@@ -1287,6 +1300,8 @@ impl InitData<'_> {
         if let Some(corner) = self.attributes.platform_specific.corner_preference {
             win.set_corner_preference(corner);
         }
+        
+        win.set_cloaked(self.attributes.platform_specific.cloaked);
     }
 }
 unsafe fn init(

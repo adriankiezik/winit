@@ -249,6 +249,11 @@ pub trait WindowExtWindows {
     /// and <https://docs.microsoft.com/en-us/windows/win32/winmsg/window-features#disabled-windows>
     fn set_enable(&self, enabled: bool);
 
+    /// Cloaks the window such that it is not visible to the user. The window is still composed by DWM.
+    ///
+    /// Not supported on Windows 7 and earlier.
+    fn set_cloaked(&self, cloaked: bool);
+
     /// This sets `ICON_BIG`. A good ceiling here is 256x256.
     fn set_taskbar_icon(&self, taskbar_icon: Option<Icon>);
 
@@ -398,6 +403,12 @@ impl WindowExtWindows for dyn Window + '_ {
         window.set_corner_preference(preference)
     }
 
+    #[inline]
+    fn set_cloaked(&self, cloaked: bool) {
+        let window = self.cast_ref::<crate::platform_impl::Window>().unwrap();
+        window.set_cloaked(cloaked)
+    }
+
     unsafe fn window_handle_any_thread(
         &self,
     ) -> Result<rwh_06::WindowHandle<'_>, rwh_06::HandleError> {
@@ -529,6 +540,11 @@ pub trait WindowAttributesExtWindows {
     ///
     /// Supported starting with Windows 11 Build 22000.
     fn with_corner_preference(self, corners: CornerPreference) -> Self;
+
+    /// Cloaks the window such that it is not visible to the user. The window is still composed by DWM.
+    ///
+    /// Not supported on Windows 7 and earlier.
+    fn with_cloaked(self, cloaked: bool) -> Self;
 }
 
 impl WindowAttributesExtWindows for WindowAttributes {
@@ -613,6 +629,12 @@ impl WindowAttributesExtWindows for WindowAttributes {
     #[inline]
     fn with_corner_preference(mut self, corners: CornerPreference) -> Self {
         self.platform_specific.corner_preference = Some(corners);
+        self
+    }
+
+    #[inline]
+    fn with_cloaked(mut self, cloaked: bool) -> Self {
+        self.platform_specific.cloaked = cloaked;
         self
     }
 }
